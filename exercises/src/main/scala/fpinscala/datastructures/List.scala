@@ -1,14 +1,21 @@
-package fpinscala.datastructures
+// package fpinscala.datastructures
 
-sealed trait List[+A] // `List` data type, parameterized on a type, `A`
-case object Nil extends List[Nothing] // A `List` data constructor representing the empty list
+sealed trait List[+A]
+// `List` data type, parameterized on a type, `A`
+
+case object Nil extends List[Nothing]
+// A `List` data constructor representing the empty list
 /* Another data constructor, representing nonempty lists. Note that `tail` is another `List[A]`,
 which may be `Nil` or another `Cons`.
  */
+
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
 
-object List { // `List` companion object. Contains functions for creating and working with lists.
-  def sum(ints: List[Int]): Int = ints match { // A function that uses pattern matching to add up a list of integers
+object List {
+  // `List` companion object. Contains functions for creating and working with lists.
+
+  def sum(ints: List[Int]): Int = ints match {
+    // A function that uses pattern matching to add up a list of integers
     case Nil => 0 // The sum of the empty list is 0.
     case Cons(x,xs) => x + sum(xs) // The sum of a list starting with `x` is `x` plus the sum of the rest of the list.
   }
@@ -19,9 +26,11 @@ object List { // `List` companion object. Contains functions for creating and wo
     case Cons(x,xs) => x * product(xs)
   }
 
-  def apply[A](as: A*): List[A] = // Variadic function syntax
+  def apply[A](as: A*): List[A] = {
+    // Variadic function syntax
     if (as.isEmpty) Nil
     else Cons(as.head, apply(as.tail: _*))
+  }
 
   val x = List(1,2,3,4,5) match {
     case Cons(x, Cons(2, Cons(4, _))) => x
@@ -50,19 +59,85 @@ object List { // `List` companion object. Contains functions for creating and wo
     foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
 
-  def tail[A](l: List[A]): List[A] = ???
+  def tail[A](l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case Cons(x, xs) => xs
+  }
 
-  def setHead[A](l: List[A], h: A): List[A] = ???
+  def setHead[A](l: List[A], h: A): List[A] = l match {
+    case Nil => Cons(h, Nil)
+    case Cons(x, xs) => Cons(h, xs)
+  }
 
-  def drop[A](l: List[A], n: Int): List[A] = ???
+  def drop[A](l: List[A], n: Int): List[A] = {
+    if (n == 0) l
+    else l match {
+      case Nil => l
+      case Cons(x, xs) => drop(xs, n-1)
+    }
+  }
 
-  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = ???
+  def dropWhile[A](l: List[A])(f: A => Boolean): List[A] = l match {
+    case Nil => Nil
+    case Cons(h, t) => {
+      if (f(h)) dropWhile(t)(f)
+      else l
+    }
+  }
 
   def init[A](l: List[A]): List[A] = ???
 
-  def length[A](l: List[A]): Int = ???
+  def length[A](l: List[A]): Int =
+    foldLeft(l, 0)((b, a) => b + 1)
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = ???
+  @annotation.tailrec
+  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B =
+    l match {
+      case Nil => z
+      case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
+    }
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = ???
+  // def map[A,B](l: List[A])(f: A => B): List[B] = l match {
+  //   case Nil => Nil
+  //   case Cons(h, t) => Cons(f(h), map(t)(f))
+  // }
+
+  def map[A,B](l: List[A])(f: A => B): List[B] =
+    foldLeft(l, Nil: List[B])((b, a) => Cons(f(a), b))
+    
+
+}
+
+
+object Main {
+  import List._
+
+  def main(args: Array[String]): Unit = {
+      val l = List(1,2,3,4,5,6,7)
+      val ld = drop(l, 3)
+      println(l)
+      println("Drop 3 from l")
+      println(ld)
+      println("Set head of l to 42")
+      val lh = setHead(l, 42)
+      println(lh)
+
+      println("Append l and ld")
+      println(append(l, ld))
+
+      println("Drop while < 4")
+      println(dropWhile(l)(_ < 4))
+
+      println("Length of l")
+      println(length(l))
+
+      println("foldLeft")
+      println(foldLeft(l, 0)((b, a) => b + a))
+
+      println("foldRight")
+      println(foldRight(l, 0)((a, b) => a + b))
+
+      println("Map _^2 to l")
+      println(map(l)(x => x*x))
+  }
 }
