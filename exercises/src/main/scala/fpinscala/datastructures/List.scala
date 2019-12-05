@@ -40,25 +40,6 @@ object List {
     case _ => 101
   }
 
-  def append[A](a1: List[A], a2: List[A]): List[A] =
-    a1 match {
-      case Nil => a2
-      case Cons(h,t) => Cons(h, append(t, a2))
-    }
-
-  def foldRight[A,B](as: List[A], z: B)(f: (A, B) => B): B = // Utility functions
-    as match {
-      case Nil => z
-      case Cons(x, xs) => f(x, foldRight(xs, z)(f))
-    }
-
-  def sum2(ns: List[Int]) =
-    foldRight(ns, 0)((x,y) => x + y)
-
-  def product2(ns: List[Double]) =
-    foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
-
-
   def tail[A](l: List[A]): List[A] = l match {
     case Nil => Nil
     case Cons(x, xs) => xs
@@ -85,10 +66,14 @@ object List {
     }
   }
 
-  def init[A](l: List[A]): List[A] = ???
-
-  def length[A](l: List[A]): Int =
-    foldLeft(l, 0)((b, a) => b + 1)
+  def init[A](l: List[A]): List[A] = {
+    def go[A](a: List[A], b: List[A]): List[A] = a match {
+      case Nil => b
+      case Cons(x, Nil) => b
+      case Cons(x, xs) => go(xs, Cons(x ,b))
+    }
+    go(l, Nil)
+  }
 
   @annotation.tailrec
   def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B =
@@ -97,15 +82,50 @@ object List {
       case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
     }
 
-  // def map[A,B](l: List[A])(f: A => B): List[B] = l match {
-  //   case Nil => Nil
-  //   case Cons(h, t) => Cons(f(h), map(t)(f))
-  // }
+  def length[A](l: List[A]): Int =
+    foldLeft(l, 0)((b, a) => b + 1)
+
+  def sum3(l: List[Int]): Int =
+    foldLeft(l, 0)((b, a) => a + b)
+
+  def product3(l: List[Int]): Int =
+    foldLeft(l, 1)((b, a) => a * b)
+
+  def reverse[A](l: List[A]): List[A] =
+    foldLeft(l, Nil: List[A])((b, a) => Cons(a, b))
+
+  def foldRight[A,B](as: List[A], z: B)(f: (A, B) => B): B =
+    foldLeft(reverse(as), z)((b, a) => f(a, b))
+
+  def append[A](l: List[A], r: List[A]): List[A] =
+    foldRight(l, r)((a, b) => Cons(a, b))
 
   def map[A,B](l: List[A])(f: A => B): List[B] =
-    foldLeft(l, Nil: List[B])((b, a) => Cons(f(a), b))
-    
+    reverse(foldLeft(l, Nil: List[B])((b, a) => Cons(f(a), b)))
 
+  def flatten[A](ll: List[List[A]]): List[A] =
+    foldRight(ll, Nil: List[A])((a, b) => append(a, b))
+
+  def flatMap[A,B](l: List[A])(f: A => List[B]): List[B] =
+    flatten(map(l)(f))
+
+  def filter[A](l: List[A])(f: A => Boolean): List[A] = {
+    def go(l: List[A], e: List[A]): List[A] = l match {
+      case Nil => e
+      case Cons(h, t) => if (f(h)) go(t, Cons(h, e)) else go(t, e)
+    }
+
+    reverse(go(l, Nil: List[A]))
+  }
+
+  def filterViaFlatMap[A](l: List[A])(f: A => Boolean) =
+    flatMap(l)(a => if (f(a)) List(a) else Nil)
+
+  def zipWith[A,B,C](l: List[A], g: List[B], f: (A, B) => C): List[C] = (a, b) match {
+    case (Nil, _) => Nil
+    case (_, Nil) => Nil
+    case (Cons(x, xs), Cons(y, ys)) => Cons(f(x,y), zipWith(xs, ys), f)
+  }
 }
 
 
@@ -114,6 +134,10 @@ object Main {
 
   def main(args: Array[String]): Unit = {
       val l = List(1,2,3,4,5,6,7)
+      val r = List(8,9,42)
+      val ll = List(l, r)
+      val ldouble = List(1.0,2.0,3.0,4.0,5.0,6.0,7.0)
+
       val ld = drop(l, 3)
       println(l)
       println("Drop 3 from l")
@@ -128,16 +152,45 @@ object Main {
       println("Drop while < 4")
       println(dropWhile(l)(_ < 4))
 
+      println("init of l")
+      println(init(l))
+
       println("Length of l")
       println(length(l))
 
       println("foldLeft")
       println(foldLeft(l, 0)((b, a) => b + a))
 
+      println("Reverse of l")
+      println(reverse(l))
+
+      println("Sum of l")
+      println(sum3(l))
+
+
+      println("Product of l")
+      println(product3(l))
+
       println("foldRight")
       println(foldRight(l, 0)((a, b) => a + b))
 
+      println("append")
+      println(append(l, r))
+
+      println("Flatten")
+      println(flatten(ll))
+      println(ll)
+
       println("Map _^2 to l")
       println(map(l)(x => x*x))
+
+      println("Filter odds")
+      println(filter(l)(_ % 2 == 0))
+
+      println("flatMap")
+      println(flatMap(l)(x => List(x, x)))
+
+      println("filterViaFlatMap")
+      println(filterViaFlatMap(l)(_ % 2 == 0))
   }
 }
