@@ -33,7 +33,7 @@ object Tree {
   }
 
   def size[A](t: Tree[A]): Int =
-    fold(t)(_ => 1)((l,r) => 1 + l + r)
+    fold(t)(_ => 1)((l, r) => 1 + l + r)
 
   def maximum(t: Tree[Int]): Int =
     fold(t)(_.value)((l,r) => l max r)
@@ -42,7 +42,7 @@ object Tree {
     fold(t)(_ => 1)((l,r) => (l + 1) max (r + 1))
 
   def map[A,B](t: Tree[A])(f: A => B): Tree[B] =
-    fold(t)(l => Leaf(f(l.value)))((l,r) => Branch(l,r))
+    fold(t)(l => Leaf(f(l.value)): Tree[B])((l,r) => Branch(l,r))
 }
 
 object Test {
@@ -63,8 +63,5 @@ object Test {
       println("Map tree")
       println(tree)
       println(map(tree)(_+13))
-
-      println("Size tree")
-      println(size(tree))
   }
 }
