@@ -1,19 +1,26 @@
-package fpinscala.errorhandling
-
+// package fpinscala.errorhandling
 
 import scala.{Option => _, Some => _, Either => _, _} // hide std library `Option`, `Some` and `Either`, since we are writing our own in this chapter
 
 sealed trait Option[+A] {
-  def map[B](f: A => B): Option[B] = ???
+  def map[B](f: A => B): Option[B] = this match {
+    case None => None
+    case Some(a) => Some(f(a))
+  }
 
-  def getOrElse[B>:A](default: => B): B = ???
+  def getOrElse[B>:A](default: => B): B = this match {
+    case None => default
+    case Some(b) => b
+  }
 
-  def flatMap[B](f: A => Option[B]): Option[B] = ???
+  def flatMap[B](f: A => Option[B]): Option[B] =
+    this.map(f)
 
   def orElse[B>:A](ob: => Option[B]): Option[B] = ???
 
   def filter(f: A => Boolean): Option[A] = ???
 }
+
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
 
@@ -45,4 +52,21 @@ object Option {
   def sequence[A](a: List[Option[A]]): Option[List[A]] = ???
 
   def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = ???
+}
+
+object Main {
+  def main(args: Array[String]): Unit = {
+    var opt = Some(3)
+    var opt_none = None
+    println("Applying map")
+    println(opt.map(_ + 1))
+
+    println("Applying getOrLese")
+    println(opt.getOrElse(42))
+    println(opt_none.getOrElse(42))
+
+    println("Applying flatMap")
+    println(opt.flatMap(v => Some(42 + v)))
+//     println(opt_none.flatMap(v => Some(42 + v)))
+  }
 }
